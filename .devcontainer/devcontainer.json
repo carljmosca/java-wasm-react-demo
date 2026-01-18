@@ -1,0 +1,24 @@
+{
+  "name": "Java WASM DevContainer (GraalVM 25 + watswasm)",
+  "build": {
+    "dockerfile": "Dockerfile"
+  },
+  "settings": {
+    "terminal.integrated.shell.linux": "/bin/bash"
+  },
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "vscjava.vscode-java-pack",
+        "redhat.vscode-xml",
+        "jawandarajbir.react-vscode-extension-pack",
+        "loiane.ts-extension-pack",
+        "toolkits.react-ts-vite",
+        "vmware.vscode-boot-dev-pack",
+        "dhruv.maven-dependency-explorer"
+      ]
+    }
+  }
+  ,
+  "forwardPorts": [5173]
+}

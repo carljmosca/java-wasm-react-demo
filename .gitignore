@@ -1,0 +1,25 @@
+# Maven
+target/
+*.jar
+*.war
+*.ear
+*.log
+
+# Node/React
+node_modules/
+dist/
+dist-ssr/
+*.local
+.npm/
+
+# IDEs
+.idea/
+*.iml
+.vscode/
+*.swp
+.DS_Store
+
+# GraalVM / WASM artifacts in frontend (copied by setup)
+react-app/public/*.wasm
+react-app/public/*.wat
+react-app/public/mathutils.js

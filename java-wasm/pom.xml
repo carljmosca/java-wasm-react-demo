@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <groupId>com.example</groupId>
+    <artifactId>java-wasm</artifactId>
+    <version>0.0.1-SNAPSHOT</version>
+    <name>java-wasm</name>
+    <description>Java WASM Demo</description>
+
+    <properties>
+        <java.version>25</java.version>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <!-- Use latest GraalVM versions for 2026 -->
+        <graalvm.version>25.0.1</graalvm.version>
+        <native.build.tools.version>0.10.6</native.build.tools.version>
+    </properties>
+
+    <dependencies>
+        <dependency>
+            <groupId>org.graalvm.nativeimage</groupId>
+            <artifactId>svm</artifactId>
+            <version>${graalvm.version}</version>
+            <scope>provided</scope>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <version>3.14.1</version>
+                <configuration>
+                    <source>25</source>
+                    <target>25</target>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.graalvm.buildtools</groupId>
+                <artifactId>native-maven-plugin</artifactId>
+                <version>${native.build.tools.version}</version>
+                <configuration>
+                    <mainClass>com.example.Math</mainClass>
+                    <imageName>mathutils</imageName>
+                    <buildArgs>
+                        <buildArg>--no-fallback</buildArg>
+                        <buildArg>--tool:svm-wasm</buildArg>
+                        <buildArg>--gc=epsilon</buildArg>
+                        <buildArg>-H:+ReportExceptionStackTraces</buildArg>
+                    </buildArgs>
+                </configuration>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>compile</goal>
+                        </goals>
+                        <phase>package</phase>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
+    </build>
+
+</project>
