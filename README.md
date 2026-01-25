@@ -45,6 +45,7 @@ This project uses the experimental **WasmGC (WebAssembly Garbage Collection)** b
 *   **WasmGC Backend**: This new backend targets the managed ecosystem of the browser. Currently, it is designed primarily to execute **Java Applications** (starting from a `main` entry point) rather than serving as a **Shared Library**.
     *   The build process optimizes heavily for the execution of `main`.
     *   While `@CEntryPoint` metadata is generated (visible in the logs), the functions are not exposed as simple top-level WASM exports in the `instance.exports` object in a way that is easily callable significantly differing from the C-ABI.
+    *   **Known Issue**: See [GraalVM Issue #11122](https://github.com/oracle/graal/issues/11122) for ongoing discussions and tracking of this limitation.
     *   Passing complex types (like Objects or Strings) between JS and WasmGC Java currently requires the specific GraalVM loader (`mathutils.js`) to handle the object graph, and the `main` method is the primary supported interface for this interaction in the preview version.
 
 ### 🔮 Future Outlook

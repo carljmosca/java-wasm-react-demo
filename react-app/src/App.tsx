@@ -7,6 +7,24 @@ declare global {
     }
 }
 
+// Singleton log interceptor
+let isConsoleIntercepted = false;
+const logListeners: ((msg: string) => void)[] = [];
+
+const setupConsoleInterceptor = () => {
+    if (isConsoleIntercepted) return;
+    isConsoleIntercepted = true;
+
+    const originalLog = console.log;
+    console.log = (...args: any[]) => {
+        originalLog(...args);
+        const msg = args.join(' ');
+        if (msg.includes("RESULT:") || msg.includes("Startup Check:")) {
+            logListeners.forEach(listener => listener(msg));
+        }
+    };
+};
+
 function App() {
     const [result, setResult] = useState<string>("");
     const [isReady, setIsReady] = useState(false);
@@ -16,45 +34,50 @@ function App() {
     const [b, setB] = useState("20");
     const [op, setOp] = useState("add");
 
+    // wasmExports state is no longer needed as we're calling GraalVM.run directly
+    // const [wasmExports, setWasmExports] = useState<any>(null);
+
     useEffect(() => {
+        // subscribe to logs
+        const handleLog = (msg: string) => {
+            setResult(prev => msg + "\n" + prev);
+        };
+        logListeners.push(handleLog);
+        setupConsoleInterceptor();
+
         const initWasm = async () => {
             try {
-                // Intercept console.log to capture Java output
-                const originalLog = console.log;
-                console.log = (...args) => {
-                    originalLog(...args);
-                    const msg = args.join(' ');
-                    // Capture lines starting with specific keywords
-                    if (msg.includes("RESULT:") || msg.includes("Startup Check:")) {
-                        setResult(prev => msg + "\n" + prev);
-                    }
-                };
+                if (window.GraalVM) {
+                    console.log("GraalVM already loaded, initializing...");
+                    await window.GraalVM.run([]);
+                    setIsReady(true);
+                    return;
+                }
+
+                if (document.getElementById('graalvm-loader')) {
+                    console.log("GraalVM script already present.");
+                    if (window.GraalVM) setIsReady(true);
+                    return;
+                }
 
                 // Load the mathutils.js script
                 const script = document.createElement('script');
+                script.id = 'graalvm-loader'; // Assign an ID to track it
                 script.src = '/mathutils.js';
                 script.async = true;
 
                 script.onload = async () => {
                     console.log("mathutils.js loaded", window.GraalVM);
                     if (window.GraalVM) {
-                        try {
-                            // Initial startup run (calls main([]) which prints "Hello...")
-                            await window.GraalVM.run([]);
-                            setIsReady(true);
-                        } catch (e) {
-                            console.error("Error running GraalVM:", e);
-                            setResult("Error running GraalVM: " + e);
-                        }
+                        // The script automatically runs main() once loaded
+                        setIsReady(true);
                     }
                 };
 
                 document.body.appendChild(script);
 
-                return () => {
-                    document.body.removeChild(script);
-                    console.log = originalLog;
-                };
+                // We do NOT remove the script on cleanup to avoid reloading complexity/duplicates
+                // document.body.removeChild(script); 
 
             } catch (err) {
                 console.error("Error setting up WASM:", err);
@@ -62,20 +85,25 @@ function App() {
             }
         };
 
-        if (!window.GraalVM) {
-            initWasm();
-        }
+        initWasm();
+
+        return () => {
+            // Unsubscribe
+            const idx = logListeners.indexOf(handleLog);
+            if (idx > -1) logListeners.splice(idx, 1);
+        };
     }, []);
 
     const handleCalculate = async () => {
-        if (!window.GraalVM) return;
+        if (!window.GraalVM) return; // Ensure GraalVM is loaded
 
         try {
-            // Re-run the VM with arguments. 
+            // Re-run the VM with arguments.
             // GraalVM WasmGC often allows invoking run() multiple times or we rely on re-entry.
             // We pass [op, a, b] as arguments to main(String[] args)
             console.log(`Calling GraalVM.run(["${op}", "${a}", "${b}"])`);
             await window.GraalVM.run([op, a, b]);
+            // The result will be captured by the console.log interceptor
         } catch (e) {
             console.error("Error executing:", e);
             setResult(`Error: ${e}`);

@@ -6,7 +6,7 @@ echo "Starting SETUP..."
 # 1. Build Java WASM
 echo "Building Java WASM module..."
 cd java-wasm
-mvn clean package -Pnative
+mvn clean package
 cd ..
 
 # 2. Verify Sources
